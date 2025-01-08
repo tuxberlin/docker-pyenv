@@ -1,5 +1,7 @@
 FROM alpine:3.21.0
 
+ARG PYVERSION=3.13.1
+
 
 RUN apk add --no-cache \
     bash \
@@ -18,11 +20,7 @@ RUN apk add --no-cache \
     ;
 
 
-# no root but normal user
-RUN adduser --uid 2001 appuser --disabled-password
-
-USER appuser
-ENV HOME="/home/appuser"
+ENV HOME="/root"
 
 WORKDIR /app
 
@@ -35,18 +33,20 @@ ENV PATH="$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH"
 ENV PYENV_SHELL="bash"
 
 RUN curl https://pyenv.run | bash \
-    && pyenv install 3.13.1 \
+    && pyenv install $PYVERSION \
     && pyenv rehash \
+    && pyenv virtualenv $PYVERSION app \
+    && pyenv local app \
     ;
 
-ENV PIPX_DEFAULT_PYTHON="$PYENV_ROOT/versions/3.13.1/bin/python"
+ENV PIPX_DEFAULT_PYTHON="$PYENV_ROOT/versions/$PYVERSION/bin/python"
 
 
 # pdm
 ENV PATH="$HOME/.local/bin:$PATH"
 
 RUN curl -sSL https://pdm-project.org/install-pdm.py | python3 - \
-    && pdm completion bash > ~/.bash_completion \
+    && pdm completion bash > $HOME/.bash_completion \
     ;
 
 
